@@ -64,7 +64,29 @@ enum Commands {
     Cleanup,
 }
 
+// ─────────────────────────────────────────────────────────────
+//  Enable ANSI colors on classic Windows CMD
+// ─────────────────────────────────────────────────────────────
+
+#[cfg(windows)]
+fn enable_ansi_colors() {
+    use windows_sys::Win32::System::Console::{
+        GetConsoleMode, GetStdHandle, SetConsoleMode, ENABLE_VIRTUAL_TERMINAL_PROCESSING,
+        STD_OUTPUT_HANDLE,
+    };
+    unsafe {
+        let handle = GetStdHandle(STD_OUTPUT_HANDLE);
+        let mut mode: u32 = 0;
+        if GetConsoleMode(handle, &mut mode) != 0 {
+            let _ = SetConsoleMode(handle, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+        }
+    }
+}
+
 fn main() {
+    #[cfg(windows)]
+    enable_ansi_colors();
+
     if let Err(e) = run() {
         eprintln!("{} {}", "✗".red().bold(), format!("{:#}", e).red());
         std::process::exit(1);
@@ -74,16 +96,16 @@ fn main() {
 fn run() -> Result<()> {
     let cli = Cli::parse();
     match cli.command {
-        Commands::Status         => cmd_status(),
-        Commands::List { all }   => cmd_list(all),
+        Commands::Status                    => cmd_status(),
+        Commands::List { all }              => cmd_list(all),
         Commands::Block { path, direction } => cmd_block(&path, &direction),
         Commands::Allow { path, direction } => cmd_allow(&path, &direction),
         Commands::Delete { name }           => cmd_delete(&name),
-        Commands::Enable         => cmd_enable(),
-        Commands::Disable        => cmd_disable(),
-        Commands::Lockdown       => cmd_lockdown(),
-        Commands::Unlock         => cmd_unlock(),
-        Commands::Cleanup        => cmd_cleanup(),
+        Commands::Enable                    => cmd_enable(),
+        Commands::Disable                   => cmd_disable(),
+        Commands::Lockdown                  => cmd_lockdown(),
+        Commands::Unlock                    => cmd_unlock(),
+        Commands::Cleanup                   => cmd_cleanup(),
     }
 }
 
@@ -181,11 +203,14 @@ fn cmd_list(all: bool) -> Result<()> {
             .unwrap_or_default();
 
         if all || name.starts_with(APP_PREFIX) {
-            // extract a few useful fields
             let get = |key: &str| -> String {
                 block
                     .lines()
-                    .find_map(|l| l.trim().strip_prefix(key).map(|s| s.trim_start_matches(':').trim().to_string()))
+                    .find_map(|l| {
+                        l.trim()
+                            .strip_prefix(key)
+                            .map(|s| s.trim_start_matches(':').trim().to_string())
+                    })
                     .unwrap_or_else(|| "-".into())
             };
             let enabled   = get("Enabled");
@@ -205,13 +230,12 @@ fn cmd_list(all: bool) -> Result<()> {
             };
 
             println!(
-                "{}  {}  [{} → {}]  {}\n    {}",
+                "{}  {}  [{} → {}]  {}",
                 status_col,
                 name.yellow().bold(),
                 direction.cyan(),
                 action_col,
                 program.dimmed(),
-                "".dimmed(),
             );
             shown += 1;
         }
@@ -281,7 +305,6 @@ fn cmd_allow(path: &str, direction: &str) -> Result<()> {
 }
 
 fn cmd_delete(name: &str) -> Result<()> {
-    // Try exact match first, then with prefix
     let candidates = vec![
         name.to_string(),
         format!("{}: {}", APP_PREFIX, name),
