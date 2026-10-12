@@ -1,0 +1,25 @@
+C:\Users\Ano\OneDrive\Desktop\rustwall\target\release>rustwall.exe --help
+🛡️  RustWall — SimpleWall-style firewall CLI
+
+Usage: rustwall.exe <COMMAND>
+
+Commands:
+  status    Show firewall status for all profiles
+  list      List RustWall-managed rules
+  block     Block an application
+  allow     Allow an application
+  delete    Delete a rule by name (RustWall prefix is added automatically)
+  enable    Enable Windows Firewall on all profiles
+  disable   Disable Windows Firewall (⚠️  dangerous)
+  lockdown  Lockdown mode — block ALL outbound traffic (whitelist only)
+  unlock    Unlock — restore default outbound policy (allow outbound)
+  cleanup   Delete every RustWall-managed rule
+  help      Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version
+
+
+view:
+rustwall.exe --help
