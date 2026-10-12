@@ -1,0 +1,20 @@
+[package]
+name = "rustwall"
+version = "0.1.0"
+edition = "2021"
+description = "SimpleWall-style terminal firewall manager for Windows"
+
+[[bin]]
+name = "rustwall"
+path = "src/main.rs"
+
+[dependencies]
+clap    = { version = "4.5", features = ["derive"] }
+anyhow  = "1.0"
+colored = "2.1"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
